@@ -104,8 +104,8 @@ def save_prompts(prompts):
     
     # Save prompts to file (overwrite mode)
     with open(filename, 'w') as file:
-        # Join all prompts with no separator (directly concatenated)
-        file.write(''.join(prompts))
+        # Join prompts with newlines between them
+        file.write('\n'.join(prompts))
     
     return filename
 
