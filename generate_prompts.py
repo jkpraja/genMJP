@@ -75,7 +75,7 @@ def generate_prompt(assistant_id):
     client.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",
-        content='Generate a detailed Midjourney prompt about any topic. Include artistic or photography style, subject matter, lighting, mood, camera angle, and any relevant parameters. Make it creative or cozy and unique. It could be portrait, wide or even panaromic aspect ratio. Do not include "/imagine prompt". For the prompt parameter, please make sure you use "--". Your format response is just pure the prompt: [Your response here]'
+        content='Generate a detailed Midjourney prompt about any topic. Include artistic or photography style, subject matter, lighting, mood, camera angle, and any relevant parameters. Make it creative or cozy and unique. It could be portrait, wide or even panaromic aspect ratio. Do not include "/imagine prompt". For the prompt parameter, please make sure you use "--". Do not add "." at the end of the prompt. Your format response is just pure the prompt: [Your response here]'
     )
     
     # Run the assistant
