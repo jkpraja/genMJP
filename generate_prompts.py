@@ -84,7 +84,10 @@ def generate_prompt(assistant_id):
         assistant_id=assistant_id
     )
     
-    # Wait for completion
+    # Wait for completion with timeout
+    start_time = datetime.now()
+    timeout_seconds = 300  # Stop if it takes more than 300 seconds
+    
     while True:
         run = client.beta.threads.runs.retrieve(
             thread_id=thread.id,
@@ -92,6 +95,11 @@ def generate_prompt(assistant_id):
         )
         if run.status == 'completed':
             break
+        
+        # Check if we've exceeded the timeout
+        elapsed = (datetime.now() - start_time).total_seconds()
+        if elapsed > timeout_seconds:
+            raise TimeoutError(f"OpenAI took too long to respond (>{timeout_seconds}s)")
     
     # Get the assistant's response
     messages = client.beta.threads.messages.list(thread_id=thread.id)

@@ -2,7 +2,7 @@ name: Generate Midjourney Prompts
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Run every hour
+    - cron: '*/30 * * * *'  # Run every 30 minutes
   workflow_dispatch:      # Allow manual trigger
 
 permissions:
@@ -60,7 +60,7 @@ jobs:
           ASSISTANT_ID: ${{ secrets.ASSISTANT_ID }}
         run: |
           echo "Starting prompt generation..."
-          python generate_prompts.py -n 99  # Generate 99 prompts per hour
+          python generate_prompts.py -n 99  # Generate 99 prompts per 30 minutes
       
       - name: Configure Git
         id: git_config
@@ -88,6 +88,7 @@ jobs:
       
       - name: Process files and prepare email
         id: process
+        if: success() || cancelled()
         run: |
           today=$(date +%y%m%d)
           yesterday=$(date -d "yesterday" +%y%m%d)
@@ -113,17 +114,35 @@ jobs:
             echo "Successfully pushed changes"
           fi
           
-          # Check for yesterday's file at 4 AM GMT+7
+          # Check for yesterday's file and time
           current_hour=$(TZ='Asia/Bangkok' date +%H)
-          if [[ "$current_hour" == "04" && -f "$yesterday_file" ]]; then
+          email_flag_file="email_sent_${yesterday}.flag"
+          
+          if [[ -f "$yesterday_file" ]] && { [[ "$current_hour" == "04" ]] || { [[ "$current_hour" > "04" ]] && [[ ! -f "$email_flag_file" ]]; }; }; then
             echo "SEND_EMAIL=true" >> $GITHUB_ENV
             echo "ATTACHMENT_FILE=$yesterday_file" >> $GITHUB_ENV
           else
             echo "SEND_EMAIL=false" >> $GITHUB_ENV
           fi
 
+      # Add cleanup step to ensure files are committed even on cancellation
+      - name: Cleanup and ensure commits
+        if: always()
+        run: |
+          # Check for any generated files that need to be committed
+          if git status --porcelain | grep -q "midjourney_prompts_"; then
+            echo "Found uncommitted prompt files, committing them..."
+            git add midjourney_prompts_*.txt
+            timestamp=$(date -u)
+            git commit -m "Auto-generate prompts (cleanup): ${timestamp}" || echo "No changes to commit"
+            git push || echo "No changes to push"
+          else
+            echo "No uncommitted prompt files found"
+          fi
+
       - name: Send email with yesterday's prompts
-        if: env.SEND_EMAIL == 'true'
+        id: send_email
+        if: env.SEND_EMAIL == 'true' && success()
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -139,3 +158,12 @@ jobs:
             Repository: ${{ github.repository }}
             Filename: ${{ env.ATTACHMENT_FILE }}
           attachments: ${{ env.ATTACHMENT_FILE }}
+      
+      - name: Create email sent flag
+        if: steps.send_email.outcome == 'success'
+        run: |
+          yesterday=$(date -d "yesterday" +%y%m%d)
+          touch "email_sent_${yesterday}.flag"
+          git add "email_sent_${yesterday}.flag"
+          git commit -m "Mark email as sent for ${yesterday}"
+          git push
