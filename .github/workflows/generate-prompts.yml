@@ -107,9 +107,15 @@ jobs:
               echo "Error: Failed to commit changes"
               exit 1
             fi
-            if ! git push; then
-              echo "Error: Failed to push changes"
+            # Pull latest changes before pushing
+            if ! git pull --rebase origin main; then
+              echo "Error: Failed to pull latest changes"
               exit 1
+            fi
+            if ! git push origin main; then
+              echo "Error: Failed to push changes"
+              # Try to pull and push again
+              git pull --rebase origin main && git push origin main || exit 1
             fi
             echo "Successfully pushed changes"
           fi
@@ -135,7 +141,9 @@ jobs:
             git add midjourney_prompts_*.txt
             timestamp=$(date -u)
             git commit -m "Auto-generate prompts (cleanup): ${timestamp}" || echo "No changes to commit"
-            git push || echo "No changes to push"
+            # Pull latest changes before pushing
+            git pull --rebase origin main
+            git push origin main || echo "No changes to push"
           else
             echo "No uncommitted prompt files found"
           fi
@@ -166,4 +174,5 @@ jobs:
           touch "email_sent_${yesterday}.flag"
           git add "email_sent_${yesterday}.flag"
           git commit -m "Mark email as sent for ${yesterday}"
-          git push
+          git pull --rebase origin main
+          git push origin main || (git pull --rebase origin main && git push origin main)
