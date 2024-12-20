@@ -60,7 +60,7 @@ jobs:
           ASSISTANT_ID: ${{ secrets.ASSISTANT_ID }}
         run: |
           echo "Starting prompt generation..."
-          python generate_prompts.py -n 50  # Generate 50 prompts per hour
+          python generate_prompts.py -n 5  # Generate 5 prompts per hour
       
       - name: Configure Git
         id: git_config
