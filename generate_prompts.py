@@ -28,7 +28,6 @@ The prompts will be saved to midjourney_prompts_YYMMDD.txt
 
 import os
 import sys
-import signal
 import openai
 import argparse
 from datetime import datetime
@@ -67,18 +66,16 @@ def load_config():
     
     return config
 
-def generate_prompt(assistant_id):
-    # Create a thread
+def generate_topic_keywords(assistant_id):
+    """Generate 5 combinations of topics and keywords."""
     thread = client.beta.threads.create()
     
-    # Add message to thread
     client.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",
-        content='Generate a detailed Midjourney prompt about any topic. Include artistic or photography style, subject matter, lighting, mood, camera angle, and any relevant parameters. Make it unique. It could be portrait, wide or even panaromic aspect ratio. Do not include "/imagine prompt". For the prompt parameter, please make sure you use "--". Do not add "." at the end of the prompt. Your format response is just pure the prompt: [Your response here]'
+        content='Generate 5 unique combinations of topics and keywords for creating Midjourney prompts. Each combination should have a main topic and 3-5 related keywords that can enhance the visual description. Format the response as a list with each line containing "Topic: [topic] | Keywords: [keyword1], [keyword2], [keyword3]". Make the combinations diverse and interesting.'
     )
     
-    # Run the assistant
     run = client.beta.threads.runs.create(
         thread_id=thread.id,
         assistant_id=assistant_id
@@ -86,7 +83,7 @@ def generate_prompt(assistant_id):
     
     # Wait for completion with timeout
     start_time = datetime.now()
-    timeout_seconds = 300  # Stop if it takes more than 300 seconds
+    timeout_seconds = 30
     
     while True:
         run = client.beta.threads.runs.retrieve(
@@ -96,12 +93,62 @@ def generate_prompt(assistant_id):
         if run.status == 'completed':
             break
         
-        # Check if we've exceeded the timeout
         elapsed = (datetime.now() - start_time).total_seconds()
         if elapsed > timeout_seconds:
             raise TimeoutError(f"OpenAI took too long to respond (>{timeout_seconds}s)")
     
-    # Get the assistant's response
+    messages = client.beta.threads.messages.list(thread_id=thread.id)
+    combinations = messages.data[0].content[0].text.value.strip().split('\n')
+    
+    # Parse combinations into list of dictionaries
+    result = []
+    for combo in combinations:
+        topic_part, keywords_part = combo.split(' | ')
+        topic = topic_part.replace('Topic:', '').strip()
+        keywords = [k.strip() for k in keywords_part.replace('Keywords:', '').split(',')]
+        result.append({'topic': topic, 'keywords': keywords})
+    
+    return result
+
+def generate_prompt(assistant_id, topic, keywords):
+    """Generate a prompt based on specific topic and keywords."""
+    thread = client.beta.threads.create()
+    
+    prompt_instruction = f"""Generate a detailed Midjourney prompt about the topic: {topic}
+Using these keywords: {', '.join(keywords)}
+Include artistic or photography style, lighting, mood, camera angle, and any relevant parameters.
+Make it creative and unique. It could be portrait, wide or panoramic aspect ratio.
+Do not include "/imagine prompt". For the prompt parameter, please make sure you use "--".
+Do not add "." at the end of the prompt.
+Your format response is just pure the prompt: [Your response here]"""
+    
+    client.beta.threads.messages.create(
+        thread_id=thread.id,
+        role="user",
+        content=prompt_instruction
+    )
+    
+    run = client.beta.threads.runs.create(
+        thread_id=thread.id,
+        assistant_id=assistant_id
+    )
+    
+    # Wait for completion with timeout
+    start_time = datetime.now()
+    timeout_seconds = 30
+    
+    while True:
+        run = client.beta.threads.runs.retrieve(
+            thread_id=thread.id,
+            run_id=run.id
+        )
+        if run.status == 'completed':
+            break
+        
+        elapsed = (datetime.now() - start_time).total_seconds()
+        if elapsed > timeout_seconds:
+            raise TimeoutError(f"OpenAI took too long to respond (>{timeout_seconds}s)")
+    
     messages = client.beta.threads.messages.list(thread_id=thread.id)
     return messages.data[0].content[0].text.value
 
@@ -126,7 +173,6 @@ def save_prompt(prompt):
     return filename
 
 def main():
-    
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Generate Midjourney prompts using OpenAI Assistant')
     parser.add_argument('-n', '--num-prompts', type=int, default=500,
@@ -174,22 +220,31 @@ def main():
     last_filename = None
     
     try:
-        for i in range(args.num_prompts):
-            try:
-                prompt = generate_prompt(assistant_id).strip()  # Remove any extra whitespace
-                # Save prompt immediately after generation
-                last_filename = save_prompt(prompt)
-                num_generated += 1
-                total_chars += len(prompt)
-                
-                # Create a progress bar-like output
-                progress = (i + 1) / args.num_prompts * 50  # 50 characters wide
-                print(f"\rProgress: [{'=' * int(progress)}{' ' * (50 - int(progress))}] {i+1}/{args.num_prompts}", end='')
-                print(f"\nGenerated and saved prompt {i+1}/{args.num_prompts}:")
-                print(f"{prompt}\n")  # Display for monitoring
-            except Exception as e:
-                print(f"\nError generating prompt {i+1}: {str(e)}")
-                continue
+        # Generate 5 topic-keyword combinations
+        print("Generating topic-keyword combinations...")
+        combinations = generate_topic_keywords(assistant_id)
+        prompts_per_combo = args.num_prompts // len(combinations)
+        
+        # Generate prompts for each combination
+        for combo in combinations:
+            print(f"\nGenerating prompts for topic: {combo['topic']}")
+            print(f"Using keywords: {', '.join(combo['keywords'])}")
+            
+            for i in range(prompts_per_combo):
+                try:
+                    prompt = generate_prompt(assistant_id, combo['topic'], combo['keywords']).strip()
+                    last_filename = save_prompt(prompt)
+                    num_generated += 1
+                    total_chars += len(prompt)
+                    
+                    # Create a progress bar-like output
+                    progress = (i + 1) / prompts_per_combo * 50
+                    print(f"\rProgress: [{'=' * int(progress)}{' ' * (50 - int(progress))}] {i+1}/{prompts_per_combo}", end='')
+                    print(f"\nGenerated and saved prompt {i+1}/{prompts_per_combo}:")
+                    print(f"{prompt}\n")
+                except Exception as e:
+                    print(f"\nError generating prompt {i+1}: {str(e)}")
+                    continue
     except KeyboardInterrupt:
         print("\nInterrupted by user.")
         if num_generated > 0:
