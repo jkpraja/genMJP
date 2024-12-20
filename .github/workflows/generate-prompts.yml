@@ -1,0 +1,48 @@
+name: Generate Midjourney Prompts
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Run every hour
+  workflow_dispatch:      # Allow manual trigger
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    
+    # Ensure only one workflow runs at a time
+    concurrency:
+      group: generate-prompts
+      cancel-in-progress: false
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Generate prompts
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ASSISTANT_ID: ${{ secrets.ASSISTANT_ID }}
+        run: python generate_prompts.py -n 50  # Generate 50 prompts per hour
+      
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+      
+      - name: Commit and push if changed
+        run: |
+          if [[ -f midjourney_prompts_*.txt ]]; then
+            git add midjourney_prompts_*.txt
+            timestamp=$(date -u)
+            git commit -m "Auto-generate prompts: ${timestamp}" || exit 0
+            git push
+          fi

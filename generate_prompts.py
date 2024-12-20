@@ -1,3 +1,31 @@
+"""
+Midjourney Prompt Generator
+
+This script generates creative prompts for Midjourney using OpenAI's Assistant API.
+
+Setup:
+1. Install requirements:
+   pip install -r requirements.txt
+
+2. Configure API credentials using either method:
+   a) Create config.txt with:
+      OPENAI_API_KEY=your_api_key
+      ASSISTANT_ID=your_assistant_id
+   
+   b) Set environment variables:
+      export OPENAI_API_KEY=your_api_key
+      export ASSISTANT_ID=your_assistant_id
+
+Usage:
+  Generate default 500 prompts:
+    python generate_prompts.py
+  
+  Generate custom number of prompts:
+    python generate_prompts.py -n 50
+
+The prompts will be saved to midjourney_prompts_YYMMDD.txt
+"""
+
 import os
 import sys
 import signal
@@ -6,23 +34,38 @@ import argparse
 from datetime import datetime
 
 def load_config():
+    """Load configuration from config.txt file or environment variables."""
     config = {}
+    required_keys = ['OPENAI_API_KEY', 'ASSISTANT_ID']
+    
+    # Try loading from config.txt first
     try:
         with open('config.txt', 'r') as file:
             for line in file:
                 if '=' in line:
                     key, value = line.strip().split('=')
                     config[key] = value
-        
-        # Verify required keys
-        required_keys = ['OPENAI_API_KEY', 'ASSISTANT_ID']
-        missing_keys = [key for key in required_keys if key not in config]
-        if missing_keys:
-            raise ValueError(f"Missing required configuration keys: {', '.join(missing_keys)}")
-            
-        return config
     except FileNotFoundError:
-        raise FileNotFoundError("config.txt file not found. Please create it with OPENAI_API_KEY and ASSISTANT_ID")
+        print("config.txt not found, checking environment variables...")
+    
+    # Check environment variables for any missing keys
+    for key in required_keys:
+        if key not in config:
+            env_value = os.getenv(key)
+            if env_value:
+                config[key] = env_value
+    
+    # Verify all required keys are present
+    missing_keys = [key for key in required_keys if key not in config]
+    if missing_keys:
+        raise ValueError(
+            f"Missing required configuration keys: {', '.join(missing_keys)}\n"
+            "Please either:\n"
+            "1. Create a config.txt file with OPENAI_API_KEY and ASSISTANT_ID, or\n"
+            "2. Set environment variables OPENAI_API_KEY and ASSISTANT_ID"
+        )
+    
+    return config
 
 def generate_prompt(assistant_id):
     # Create a thread

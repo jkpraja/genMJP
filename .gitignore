@@ -1,1 +1,10 @@
+# Configuration files
+config.txt
+
+# Python
 venv/
+__pycache__/
+*.pyc
+
+# Keep generated prompts
+!midjourney_prompts_*.txt
