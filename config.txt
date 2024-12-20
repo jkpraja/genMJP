@@ -1,2 +1,0 @@
-OPENAI_API_KEY=sk-proj-0Mecq7L54mgqQkXdihBmT3BlbkFJEI6zFIFDtX8z8vxGuoCR
-ASSISTANT_ID=asst_9uivCorvyvsdT2TvpODqzHKH
