@@ -31,6 +31,7 @@ import sys
 import openai
 import argparse
 from datetime import datetime
+import pytz
 
 def load_config():
     """Load configuration from config.txt file or environment variables."""
@@ -82,7 +83,7 @@ def generate_topic_keywords(assistant_id):
     )
     
     # Wait for completion with timeout
-    start_time = datetime.now()
+    start_time = datetime.now(pytz.timezone('Asia/Bangkok'))
     timeout_seconds = 300
     
     while True:
@@ -134,7 +135,7 @@ Your format response is just pure the prompt: [Your response here]"""
     )
     
     # Wait for completion with timeout
-    start_time = datetime.now()
+    start_time = datetime.now(pytz.timezone('Asia/Bangkok'))
     timeout_seconds = 450
     
     while True:
@@ -145,7 +146,7 @@ Your format response is just pure the prompt: [Your response here]"""
         if run.status == 'completed':
             break
         
-        elapsed = (datetime.now() - start_time).total_seconds()
+        elapsed = (datetime.now(pytz.timezone('Asia/Bangkok')) - start_time).total_seconds()
         if elapsed > timeout_seconds:
             raise TimeoutError(f"OpenAI took too long to respond (>{timeout_seconds}s)")
     
@@ -154,7 +155,7 @@ Your format response is just pure the prompt: [Your response here]"""
 
 def save_prompt(prompt):
     """Save a single prompt to today's file."""
-    date_str = datetime.now().strftime('%y%m%d')
+    date_str = datetime.now(pytz.timezone('Asia/Bangkok')).strftime('%y%m%d')
     filename = f'midjourney_prompts_{date_str}.txt'
     
     # Check if file exists and has content

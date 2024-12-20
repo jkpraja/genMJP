@@ -90,8 +90,8 @@ jobs:
         id: process
         if: success() || cancelled()
         run: |
-          today=$(date +%y%m%d)
-          yesterday=$(date -d "yesterday" +%y%m%d)
+          today=$(TZ='Asia/Bangkok' date +%y%m%d)
+          yesterday=$(TZ='Asia/Bangkok' date -d "yesterday" +%y%m%d)
           today_file="midjourney_prompts_${today}.txt"
           yesterday_file="midjourney_prompts_${yesterday}.txt"
           
@@ -102,7 +102,7 @@ jobs:
               echo "Error: Failed to stage file"
               exit 1
             fi
-            timestamp=$(date -u)
+            timestamp=$(TZ='Asia/Bangkok' date)
             if ! git commit -m "Auto-generate prompts: ${timestamp}"; then
               echo "Error: Failed to commit changes"
               exit 1
@@ -139,7 +139,7 @@ jobs:
           if git status --porcelain | grep -q "midjourney_prompts_"; then
             echo "Found uncommitted prompt files, committing them..."
             git add midjourney_prompts_*.txt
-            timestamp=$(date -u)
+            timestamp=$(TZ='Asia/Bangkok' date)
             git commit -m "Auto-generate prompts (cleanup): ${timestamp}" || echo "No changes to commit"
             # Pull latest changes before pushing
             git pull --rebase origin main
@@ -170,7 +170,7 @@ jobs:
       - name: Create email sent flag
         if: steps.send_email.outcome == 'success'
         run: |
-          yesterday=$(date -d "yesterday" +%y%m%d)
+          yesterday=$(TZ='Asia/Bangkok' date -d "yesterday" +%y%m%d)
           touch "email_sent_${yesterday}.flag"
           git add "email_sent_${yesterday}.flag"
           git commit -m "Mark email as sent for ${yesterday}"
