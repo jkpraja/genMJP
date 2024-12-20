@@ -67,7 +67,7 @@ def load_config():
     return config
 
 def generate_topic_keywords(assistant_id):
-    """Generate 5 combinations of topics and keywords."""
+    """Generate 5 combinations of topics and keywords from the list."""
     thread = client.beta.threads.create()
     
     client.beta.threads.messages.create(
@@ -83,7 +83,7 @@ def generate_topic_keywords(assistant_id):
     
     # Wait for completion with timeout
     start_time = datetime.now()
-    timeout_seconds = 30
+    timeout_seconds = 300
     
     while True:
         run = client.beta.threads.runs.retrieve(
