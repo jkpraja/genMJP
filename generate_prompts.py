@@ -94,7 +94,7 @@ def generate_topic_keywords(assistant_id):
         if run.status == 'completed':
             break
         
-        elapsed = (datetime.now() - start_time).total_seconds()
+        elapsed = (datetime.now(pytz.timezone('Asia/Bangkok')) - start_time).total_seconds()
         if elapsed > timeout_seconds:
             raise TimeoutError(f"OpenAI took too long to respond (>{timeout_seconds}s)")
     
