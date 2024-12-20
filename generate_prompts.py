@@ -21,7 +21,7 @@ Usage:
     python generate_prompts.py
   
   Generate custom number of prompts:
-    python generate_prompts.py -n 50
+    python generate_prompts.py -n 5
 
 The prompts will be saved to midjourney_prompts_YYMMDD.txt
 """
