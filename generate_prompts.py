@@ -97,8 +97,8 @@ def generate_prompt(assistant_id):
     messages = client.beta.threads.messages.list(thread_id=thread.id)
     return messages.data[0].content[0].text.value
 
-def save_prompts(prompts):
-    # Generate filename with date
+def save_prompt(prompt):
+    """Save a single prompt to today's file."""
     date_str = datetime.now().strftime('%y%m%d')
     filename = f'midjourney_prompts_{date_str}.txt'
     
@@ -108,29 +108,16 @@ def save_prompts(prompts):
         with open(filename, 'r') as file:
             existing_content = file.read().strip()
     
-    # Append prompts to file
+    # Append prompt to file
     with open(filename, 'a') as file:
-        # If file already has content, add newline before new prompts
+        # If file already has content, add newline before new prompt
         if existing_content:
             file.write('\n')
-        file.write('\n'.join(prompts))
+        file.write(prompt)
     
     return filename
 
 def main():
-    # Store prompts globally so signal handler can access them
-    global generated_prompts
-    generated_prompts = []
-    
-    def signal_handler(signum, frame):
-        print("\nGracefully stopping... saving generated prompts...")
-        if generated_prompts:
-            filename = save_prompts(generated_prompts)
-            print(f"\nSaved {len(generated_prompts)} prompts to {filename}")
-        sys.exit(0)
-    
-    # Set up signal handler
-    signal.signal(signal.SIGINT, signal_handler)
     
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Generate Midjourney prompts using OpenAI Assistant')
@@ -174,31 +161,35 @@ def main():
         print(f"Setup error: {str(e)}")
         sys.exit(1)
     
+    num_generated = 0
+    total_chars = 0
+    last_filename = None
+    
     try:
         for i in range(args.num_prompts):
             try:
                 prompt = generate_prompt(assistant_id).strip()  # Remove any extra whitespace
-                generated_prompts.append(prompt)  # No newlines added
+                # Save prompt immediately after generation
+                last_filename = save_prompt(prompt)
+                num_generated += 1
+                total_chars += len(prompt)
+                
                 # Create a progress bar-like output
                 progress = (i + 1) / args.num_prompts * 50  # 50 characters wide
                 print(f"\rProgress: [{'=' * int(progress)}{' ' * (50 - int(progress))}] {i+1}/{args.num_prompts}", end='')
-                print(f"\nGenerated prompt {i+1}/{args.num_prompts}:")
+                print(f"\nGenerated and saved prompt {i+1}/{args.num_prompts}:")
                 print(f"{prompt}\n")  # Display for monitoring
             except Exception as e:
                 print(f"\nError generating prompt {i+1}: {str(e)}")
                 continue
     except KeyboardInterrupt:
-        print("\nInterrupted by user. Saving generated prompts...")
-        if generated_prompts:
-            filename = save_prompts(generated_prompts)
-            print(f"\nSaved {len(generated_prompts)} prompts to {filename}")
+        print("\nInterrupted by user.")
+        if num_generated > 0:
+            print(f"\nSuccessfully generated and saved {num_generated} prompts to {last_filename}")
         sys.exit(0)
     
-    # Save all prompts if completed successfully
-    if generated_prompts:
-        filename = save_prompts(generated_prompts)
-        num_chars = sum(len(p) for p in generated_prompts)
-        print(f"\nSuccessfully generated {len(generated_prompts)} prompts ({num_chars} characters) and saved to {filename}")
+    if num_generated > 0:
+        print(f"\nSuccessfully generated and saved {num_generated} prompts ({total_chars} characters) to {last_filename}")
 
 if __name__ == "__main__":
     main()
