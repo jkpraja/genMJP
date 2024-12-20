@@ -102,9 +102,17 @@ def save_prompts(prompts):
     date_str = datetime.now().strftime('%y%m%d')
     filename = f'midjourney_prompts_{date_str}.txt'
     
-    # Save prompts to file (overwrite mode)
-    with open(filename, 'w') as file:
-        # Join prompts with newlines between them
+    # Check if file exists and has content
+    existing_content = ''
+    if os.path.exists(filename):
+        with open(filename, 'r') as file:
+            existing_content = file.read().strip()
+    
+    # Append prompts to file
+    with open(filename, 'a') as file:
+        # If file already has content, add newline before new prompts
+        if existing_content:
+            file.write('\n')
         file.write('\n'.join(prompts))
     
     return filename
