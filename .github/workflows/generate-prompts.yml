@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write        # Required for pushing changes
 
+env:
+  SENDER_EMAIL: "github-actions[bot]@users.noreply.github.com"
+
 jobs:
   generate:
     runs-on: ubuntu-latest
@@ -57,7 +60,7 @@ jobs:
           ASSISTANT_ID: ${{ secrets.ASSISTANT_ID }}
         run: |
           echo "Starting prompt generation..."
-          python generate_prompts.py -n 5  # Generate 50 prompts per hour
+          python generate_prompts.py -n 50  # Generate 50 prompts per hour
       
       - name: Configure Git
         run: |
@@ -65,17 +68,45 @@ jobs:
           git config user.email "actions@github.com"
       
       - name: Commit and push if changed
+        id: commit
         run: |
           if [[ -f midjourney_prompts_*.txt ]]; then
-            git add midjourney_prompts_*.txt
-            timestamp=$(date -u)
-            if git diff --staged --quiet; then
-              echo "No changes to commit"
-            else
+            # Find the modified file
+            modified_file=$(git status --porcelain | grep "midjourney_prompts_" | awk '{print $2}')
+            if [ -n "$modified_file" ]; then
+              git add "$modified_file"
+              timestamp=$(date -u)
               git commit -m "Auto-generate prompts: ${timestamp}"
               git push
               echo "Successfully pushed changes"
+              echo "UPDATED_FILE=$modified_file" >> $GITHUB_ENV
+              echo "CHANGES_MADE=true" >> $GITHUB_ENV
+            else
+              echo "No changes to commit"
+              echo "CHANGES_MADE=false" >> $GITHUB_ENV
             fi
           else
             echo "No prompt files found"
+            echo "CHANGES_MADE=false" >> $GITHUB_ENV
           fi
+
+      - name: Send email
+        if: success() && env.CHANGES_MADE == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: New Midjourney Prompts Generated
+          from: ${{ env.SENDER_EMAIL }}
+          to: ${{ secrets.EMAIL_TO }}
+          body: |
+            New Midjourney prompts have been generated.
+            
+            Generated at: ${{ github.event.repository.updated_at }}
+            Repository: ${{ github.repository }}
+            Filename: ${{ env.UPDATED_FILE }}
+            
+            The updated prompts file is attached.
+          attachments: ${{ env.UPDATED_FILE }}
