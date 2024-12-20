@@ -135,7 +135,7 @@ Your format response is just pure the prompt: [Your response here]"""
     
     # Wait for completion with timeout
     start_time = datetime.now()
-    timeout_seconds = 30
+    timeout_seconds = 450
     
     while True:
         run = client.beta.threads.runs.retrieve(
