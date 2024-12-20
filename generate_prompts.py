@@ -68,18 +68,18 @@ def load_config():
     return config
 
 def generate_topic_keywords(assistant_id):
-    """Generate 5 combinations of topics and keywords from the list."""
+    """Generate topic-keyword combinations."""
     thread = client.beta.threads.create()
     
     client.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",
-        content='''Generate 5 unique combinations of topics and keywords for creating Midjourney prompts.
+        content='''Generate unique combinations of topics and keywords for creating Midjourney prompts.
 Each combination must follow this exact format (including the "Topic:" and "Keywords:" prefixes and the " | " separator):
 
-Topic: underwater city | Keywords: bioluminescent, coral architecture, glass domes, aquatic life
+Topic: underwater city | Keywords: bioluminescent, coral architecture, glass domes, aquatic life, shipwreck
 
-Generate 5 combinations in this exact format, each on a new line. Make the combinations diverse and interesting, with 3-5 keywords each.'''
+Each topic MUST have exactly 5 keywords. Generate 5 combinations in this exact format, each on a new line. Make the combinations diverse and interesting.'''
     )
     
     run = client.beta.threads.runs.create(
@@ -89,7 +89,7 @@ Generate 5 combinations in this exact format, each on a new line. Make the combi
     
     # Wait for completion with timeout
     start_time = datetime.now(pytz.timezone('Asia/Bangkok'))
-    timeout_seconds = 300
+    timeout_seconds = 600
     
     while True:
         run = client.beta.threads.runs.retrieve(
@@ -131,6 +131,10 @@ Generate 5 combinations in this exact format, each on a new line. Make the combi
                 print(f"Warning: Empty topic or keywords in response: {combo}")
                 continue
                 
+            if len(keywords) != 5:
+                print(f"Warning: Expected 5 keywords, got {len(keywords)} for topic '{topic}'")
+                continue
+                
             result.append({'topic': topic, 'keywords': keywords})
         except Exception as e:
             print(f"Warning: Error parsing combination '{combo}': {str(e)}")
@@ -141,12 +145,12 @@ Generate 5 combinations in this exact format, each on a new line. Make the combi
     
     return result
 
-def generate_prompt(assistant_id, topic, keywords):
-    """Generate a prompt based on specific topic and keywords."""
+def generate_prompt(assistant_id, topic, keyword):
+    """Generate a prompt based on a topic and a single keyword."""
     thread = client.beta.threads.create()
     
     prompt_instruction = f"""Generate a detailed Midjourney prompt about the topic: {topic}
-Using these keywords: {', '.join(keywords)}
+Using this specific keyword: {keyword}
 Include artistic or photography style, lighting, mood, camera angle, and any relevant parameters.
 Make it creative and unique. It could be portrait, wide or panoramic aspect ratio.
 Do not include "/imagine prompt". For the prompt parameter, please make sure you use "--".
@@ -166,7 +170,7 @@ Your format response is just pure the prompt: [Your response here]"""
     
     # Wait for completion with timeout
     start_time = datetime.now(pytz.timezone('Asia/Bangkok'))
-    timeout_seconds = 450
+    timeout_seconds = 600
     
     while True:
         run = client.beta.threads.runs.retrieve(
@@ -206,8 +210,8 @@ def save_prompt(prompt):
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Generate Midjourney prompts using OpenAI Assistant')
-    parser.add_argument('-n', '--num-prompts', type=int, default=500,
-                      help='Number of prompts to generate (default: 500)')
+    parser.add_argument('-n', '--num-prompts', type=int, default=10,
+                      help='Number of prompts to generate per keyword (default: 2)')
     args = parser.parse_args()
     
     # Load configuration
@@ -251,31 +255,31 @@ def main():
     last_filename = None
     
     try:
-        # Generate 5 topic-keyword combinations
+        # Generate topic-keyword combinations
         print("Generating topic-keyword combinations...")
         combinations = generate_topic_keywords(assistant_id)
-        prompts_per_combo = args.num_prompts // len(combinations)
+        prompts_per_keyword = args.num_prompts
         
-        # Generate prompts for each combination
+        # Generate prompts for each topic-keyword combination
         for combo in combinations:
-            print(f"\nGenerating prompts for topic: {combo['topic']}")
-            print(f"Using keywords: {', '.join(combo['keywords'])}")
+            print(f"\nProcessing topic: {combo['topic']}")
             
-            for i in range(prompts_per_combo):
-                try:
-                    prompt = generate_prompt(assistant_id, combo['topic'], combo['keywords']).strip()
-                    last_filename = save_prompt(prompt)
-                    num_generated += 1
-                    total_chars += len(prompt)
-                    
-                    # Create a progress bar-like output
-                    progress = (i + 1) / prompts_per_combo * 50
-                    print(f"\rProgress: [{'=' * int(progress)}{' ' * (50 - int(progress))}] {i+1}/{prompts_per_combo}", end='')
-                    print(f"\nGenerated and saved prompt {i+1}/{prompts_per_combo}:")
-                    print(f"{prompt}\n")
-                except Exception as e:
-                    print(f"\nError generating prompt {i+1}: {str(e)}")
-                    continue
+            # Generate prompts for each keyword
+            for keyword in combo['keywords']:
+                print(f"\nGenerating prompts for keyword: {keyword}")
+                
+                for i in range(prompts_per_keyword):
+                    try:
+                        prompt = generate_prompt(assistant_id, combo['topic'], keyword).strip()
+                        last_filename = save_prompt(prompt)
+                        num_generated += 1
+                        total_chars += len(prompt)
+                        
+                        print(f"Generated prompt {i+1}/{prompts_per_keyword}:")
+                        print(f"{prompt}\n")
+                    except Exception as e:
+                        print(f"\nError generating prompt {i+1}: {str(e)}")
+                        continue
     except KeyboardInterrupt:
         print("\nInterrupted by user.")
         if num_generated > 0:
