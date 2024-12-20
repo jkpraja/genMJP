@@ -89,9 +89,9 @@ jobs:
       - name: Commit and push if changed
         id: commit
         run: |
-          if [[ -f midjourney_prompts_*.txt ]]; then
+          if [[ -f midjourney_prompts_$(date +%y%m%d).txt ]]; then
             # Find the modified file
-            modified_file=$(git status --porcelain | grep "midjourney_prompts_" | awk '{print $2}')
+            modified_file="midjourney_prompts_$(date +%y%m%d).txt"
             if [ -n "$modified_file" ]; then
               echo "Found modified file: $modified_file"
               if ! git add "$modified_file"; then
