@@ -128,7 +128,7 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: New Midjourney Prompts Generated
-          from: ${{ env.SENDER_EMAIL }}
+          from: MJ Prompt Generator
           to: ${{ secrets.EMAIL_TO }}
           body: |
             New Midjourney prompts have been generated.
