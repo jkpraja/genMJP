@@ -97,24 +97,15 @@ def generate_prompt(assistant_id):
     messages = client.beta.threads.messages.list(thread_id=thread.id)
     return messages.data[0].content[0].text.value
 
-def save_prompts(prompts, start_from=1):
+def save_prompts(prompts):
     # Generate filename with date
     date_str = datetime.now().strftime('%y%m%d')
     filename = f'midjourney_prompts_{date_str}.txt'
     
-    # Determine starting prompt number
-    start_num = start_from
-    if os.path.exists(filename):
-        with open(filename, 'r') as file:
-            content = file.read()
-            existing_prompts = content.count('Prompt ')
-            start_num = existing_prompts + 1
-    
-    # Save prompts to file
-    mode = 'a' if os.path.exists(filename) else 'w'
-    with open(filename, mode) as file:
-        for i, prompt in enumerate(prompts, start_num):
-            file.write(f"Prompt {i}:\n{prompt}\n\n")
+    # Save prompts to file (overwrite mode)
+    with open(filename, 'w') as file:
+        # Join all prompts with no separator (directly concatenated)
+        file.write(''.join(prompts))
     
     return filename
 
@@ -178,13 +169,13 @@ def main():
     try:
         for i in range(args.num_prompts):
             try:
-                prompt = generate_prompt(assistant_id)
-                generated_prompts.append(prompt)
+                prompt = generate_prompt(assistant_id).strip()  # Remove any extra whitespace
+                generated_prompts.append(prompt)  # No newlines added
                 # Create a progress bar-like output
                 progress = (i + 1) / args.num_prompts * 50  # 50 characters wide
                 print(f"\rProgress: [{'=' * int(progress)}{' ' * (50 - int(progress))}] {i+1}/{args.num_prompts}", end='')
                 print(f"\nGenerated prompt {i+1}/{args.num_prompts}:")
-                print(f"{prompt}\n")
+                print(f"{prompt}\n")  # Display for monitoring
             except Exception as e:
                 print(f"\nError generating prompt {i+1}: {str(e)}")
                 continue
@@ -198,7 +189,8 @@ def main():
     # Save all prompts if completed successfully
     if generated_prompts:
         filename = save_prompts(generated_prompts)
-        print(f"\nSuccessfully generated {len(generated_prompts)} prompts and saved to {filename}")
+        num_chars = sum(len(p) for p in generated_prompts)
+        print(f"\nSuccessfully generated {len(generated_prompts)} prompts ({num_chars} characters) and saved to {filename}")
 
 if __name__ == "__main__":
     main()
