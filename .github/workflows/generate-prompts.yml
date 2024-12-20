@@ -86,56 +86,56 @@ jobs:
           fi
           echo "Git configuration successful"
       
-      - name: Commit and push if changed
-        id: commit
+      - name: Process files and prepare email
+        id: process
         run: |
-          if [[ -f midjourney_prompts_$(date +%y%m%d).txt ]]; then
-            # Find the modified file
-            modified_file="midjourney_prompts_$(date +%y%m%d).txt"
-            if [ -n "$modified_file" ]; then
-              echo "Found modified file: $modified_file"
-              if ! git add "$modified_file"; then
-                echo "Error: Failed to stage file"
-                exit 1
-              fi
-              timestamp=$(date -u)
-              if ! git commit -m "Auto-generate prompts: ${timestamp}"; then
-                echo "Error: Failed to commit changes"
-                exit 1
-              fi
-              if ! git push; then
-                echo "Error: Failed to push changes"
-                exit 1
-              fi
-              echo "Successfully pushed changes"
-              echo "UPDATED_FILE=$modified_file" >> $GITHUB_ENV
-              echo "CHANGES_MADE=true" >> $GITHUB_ENV
-            else
-              echo "No changes to commit"
-              echo "CHANGES_MADE=false" >> $GITHUB_ENV
+          today=$(date +%y%m%d)
+          yesterday=$(date -d "yesterday" +%y%m%d)
+          today_file="midjourney_prompts_${today}.txt"
+          yesterday_file="midjourney_prompts_${yesterday}.txt"
+          
+          # Commit today's file if it exists
+          if [[ -f "$today_file" ]]; then
+            echo "Found today's file: $today_file"
+            if ! git add "$today_file"; then
+              echo "Error: Failed to stage file"
+              exit 1
             fi
+            timestamp=$(date -u)
+            if ! git commit -m "Auto-generate prompts: ${timestamp}"; then
+              echo "Error: Failed to commit changes"
+              exit 1
+            fi
+            if ! git push; then
+              echo "Error: Failed to push changes"
+              exit 1
+            fi
+            echo "Successfully pushed changes"
+          fi
+          
+          # Check for yesterday's file at 4 AM GMT+7
+          current_hour=$(TZ='Asia/Bangkok' date +%H)
+          if [[ "$current_hour" == "04" && -f "$yesterday_file" ]]; then
+            echo "SEND_EMAIL=true" >> $GITHUB_ENV
+            echo "ATTACHMENT_FILE=$yesterday_file" >> $GITHUB_ENV
           else
-            echo "No prompt files found"
-            echo "CHANGES_MADE=false" >> $GITHUB_ENV
+            echo "SEND_EMAIL=false" >> $GITHUB_ENV
           fi
 
-      - name: Send email
-        if: success() && env.CHANGES_MADE == 'true'
+      - name: Send email with yesterday's prompts
+        if: env.SEND_EMAIL == 'true'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
           server_port: 465
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: New Midjourney Prompts Generated
-          from: MJ Prompt Generator
+          subject: Yesterday's Midjourney Prompts
+          from: ${{ env.SENDER_EMAIL }}
           to: ${{ secrets.EMAIL_TO }}
           body: |
-            New Midjourney prompts have been generated.
+            Yesterday's Midjourney prompts are attached.
             
-            Generated at: ${{ github.event.repository.updated_at }}
             Repository: ${{ github.repository }}
-            Filename: ${{ env.UPDATED_FILE }}
-            
-            The updated prompts file is attached.
-          attachments: ${{ env.UPDATED_FILE }}
+            Filename: ${{ env.ATTACHMENT_FILE }}
+          attachments: ${{ env.ATTACHMENT_FILE }}
