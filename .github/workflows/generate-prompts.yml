@@ -60,12 +60,31 @@ jobs:
           ASSISTANT_ID: ${{ secrets.ASSISTANT_ID }}
         run: |
           echo "Starting prompt generation..."
-          python generate_prompts.py -n 5  # Generate 50 prompts per hour
+          python generate_prompts.py -n 50  # Generate 50 prompts per hour
       
       - name: Configure Git
+        id: git_config
         run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
+          echo "Configuring Git..."
+          if ! git config user.name "GitHub Actions Bot"; then
+            echo "Error: Failed to set Git user name"
+            exit 1
+          fi
+          if ! git config user.email "56293901+jkpraja@users.noreply.github.com"; then
+            echo "Error: Failed to set Git user email"
+            exit 1
+          fi
+          # Verify git configuration
+          git_name=$(git config user.name)
+          git_email=$(git config user.email)
+          echo "Git configured with:"
+          echo "User name: $git_name"
+          echo "User email: $git_email"
+          if [ "$git_name" != "GitHub Actions Bot" ] || [ "$git_email" != "actions@github.com" ]; then
+            echo "Error: Git configuration verification failed"
+            exit 1
+          fi
+          echo "Git configuration successful"
       
       - name: Commit and push if changed
         id: commit
@@ -74,10 +93,20 @@ jobs:
             # Find the modified file
             modified_file=$(git status --porcelain | grep "midjourney_prompts_" | awk '{print $2}')
             if [ -n "$modified_file" ]; then
-              git add "$modified_file"
+              echo "Found modified file: $modified_file"
+              if ! git add "$modified_file"; then
+                echo "Error: Failed to stage file"
+                exit 1
+              fi
               timestamp=$(date -u)
-              git commit -m "Auto-generate prompts: ${timestamp}"
-              git push
+              if ! git commit -m "Auto-generate prompts: ${timestamp}"; then
+                echo "Error: Failed to commit changes"
+                exit 1
+              fi
+              if ! git push; then
+                echo "Error: Failed to push changes"
+                exit 1
+              fi
               echo "Successfully pushed changes"
               echo "UPDATED_FILE=$modified_file" >> $GITHUB_ENV
               echo "CHANGES_MADE=true" >> $GITHUB_ENV
