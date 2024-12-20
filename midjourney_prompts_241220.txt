@@ -1,0 +1,45 @@
+Prompt 1:
+Abstract background with a vibrant interplay of colors, featuring smooth waves and dynamic shapes, under soft ambient lighting that creates a serene mood, captured from a mid-height camera angle to emphasize depth and flow, showcasing rich blues and gentle pastels —ar 16:9 --q 2 --s 750
+
+Prompt 2:
+background image, an abstract depiction of colorful liquid art with swirling patterns, in the style of fluid dynamics and hyper-realistic textures, emphasizing vibrant blue and orange hues, illuminated with soft ambient lighting, creating a dreamy and surreal atmosphere, taken from a top-down camera angle to capture the intricate details, showcasing layers of transparency and depth --ar 16:9 --q 2 --s 500
+
+Prompt 3:
+background image, abstract colorful liquid patterns swirling and flowing together, in the style of ethereal minimalism, silky smooth textures, vibrant color palette of aqua, orange, and soft pinks, illuminated by gentle ambient lighting, creating a dreamy atmosphere, captured from a high-angle perspective, emphasizing depth and movement, with a generous copy space area for text placement --ar 16:9 --v 5.2 --q 2 --s 500
+
+Prompt 4:
+A captivating close-up of vibrant glass marbles arranged artistically on a textured wooden surface, bathed in soft, ambient light, creating a serene and calming mood. The composition focuses on the intricate patterns within the marbles, highlighted by reflective surfaces that catch the light beautifully. Taken with a macro lens to emphasize the details, the shot is designed to allow ample copy space on the top left for text overlays. The colors include rich blues, greens, and amber, creating a harmonious palette. --ar 3:2 --q 2 --s 500
+
+Prompt 5:
+abstract swirling background of vibrant colors, in the style of fluid formations, soft gradients, dynamic movement, illuminated by soft ambient lighting, conveying a dreamy and serene mood, captured from a close-up perspective, featuring a harmonious blend of light cyan and crimson palettes, intricate details enhanced with subtle textural elements --ar 16:9 --v 5.2 --s 500
+
+Prompt 6:
+background image, an abstract swirling pattern of liquid colors in vibrant shades of teal and orange, in the style of fluid dynamics and high-speed photography, illuminated with soft ambient lighting, creating a calming and ethereal mood, macro close-up perspective, showcasing intricate details and textures, with a clean white background for copy space --ar 16:9 --q 2 --style raw --s 750
+
+Prompt 7:
+colorful abstract 3D swirls with dynamic brushwork, in the style of fluid and flowing shapes, vibrant color palette, high contrast, captured from above with a wide-angle lens, bright ambient lighting, immersive and playful mood, intricate detail, copy space for text or branding --ar 16:9 --q 2 --s 500
+
+Prompt 8:
+background image, an abstract city scene with swirling blue and orange lights, in the style of futuristic fragmentation, ultra-detailed textures, soft gradients, ambient lighting, atmospheric perspective, capturing the dynamic essence of urban life, close-up focus on architectural elements, tranquil yet energetic vibe, rich in colors and contrasts --style raw --ar 16:9 --v 5.2 --s 500
+
+Prompt 9:
+abstract background, dynamic colorful waves flowing into an infinite horizon, vibrant with radiant hues of blue, pink, and orange, soft ambient lighting, tranquil mood, captured from a low angle to emphasize the depth, surrealistic style, high resolution, incorporating ample copy space for text integration --ar 16:9 --q 2 --s 750
+
+Prompt 10:
+background image, a serene abstract landscape with soft gradients of lavender and peach, in the style of ethereal minimalism, misty atmosphere, smooth flowing forms, ultra-high-definition details, naturally lit —ar 16:9 —q 2 —s 500
+
+Prompt 11:
+background image, a captivating abstract artwork of swirling colors, in the style of flowing fabrics, ethereal and dreamlike, with vibrant pink, deep violet, and golden hues, illuminated by soft ambient light, evoking a serene and calming mood, captured from a low angle featuring intricate details, --ar 16:9 --q 2 --s 500
+
+Prompt 12:
+background image, a vibrant metallic blue abstract sculpture, in the style of hyper-realistic renderings, featuring dramatic light reflections, ambient lighting, and intricate details, showcasing a futuristic city skyline in the background, overcast atmosphere, energetic mood, close-up shot, fluid lines and forms, with a blurred foreground for depth --ar 16:9 --q 2 --s 500
+
+Prompt 13:
+A vibrant bokeh background with colorful orbs of light, creating a dreamy atmosphere, in a soft and warm focus style, featuring a blend of red, yellow, and blue hues, illuminated by gentle ambient lighting, evoking a sense of nostalgia and cheerfulness, captured from a high angle perspective to enhance depth, with ample copy space available for overlay text. --ar 16:9 --q 2 --s 500 --stop 80
+
+Prompt 14:
+A serene, ethereal landscape featuring a lush green valley under a twilight sky, with a glowing river reflecting the soft light, captured in an impressionistic painting style. The scene should evoke tranquility and introspection, complemented by subtle pastel colors of lavender and mint. A low-angle view that emphasizes the expansive sky and distant mountains, with a slightly blurred effect to enhance the dreamlike quality. --ar 16:9 --q 2 --s 500
+
+Prompt 15:
+A vibrant abstract background with swirling colors in warm tones, featuring a bokeh effect, soft focus depth, and an ethereal quality. The image is illuminated with ambient light, creating a dreamy, surreal atmosphere. Captured from a slightly elevated camera angle, allowing for a panoramic view that invites exploration. This piece is designed to have ample copy space for text or branding, ideal for marketing or editorial use. --ar 16:9 --q 2 --s 750
+
