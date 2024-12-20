@@ -74,7 +74,12 @@ def generate_topic_keywords(assistant_id):
     client.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",
-        content='Generate 5 unique combinations of topics and keywords for creating Midjourney prompts. Each combination should have a main topic and 3-5 related keywords that can enhance the visual description. Format the response as a list with each line containing "Topic: [topic] | Keywords: [keyword1], [keyword2], [keyword3]". Make the combinations diverse and interesting.'
+        content='''Generate 5 unique combinations of topics and keywords for creating Midjourney prompts.
+Each combination must follow this exact format (including the "Topic:" and "Keywords:" prefixes and the " | " separator):
+
+Topic: underwater city | Keywords: bioluminescent, coral architecture, glass domes, aquatic life
+
+Generate 5 combinations in this exact format, each on a new line. Make the combinations diverse and interesting, with 3-5 keywords each.'''
     )
     
     run = client.beta.threads.runs.create(
@@ -99,15 +104,40 @@ def generate_topic_keywords(assistant_id):
             raise TimeoutError(f"OpenAI took too long to respond (>{timeout_seconds}s)")
     
     messages = client.beta.threads.messages.list(thread_id=thread.id)
-    combinations = messages.data[0].content[0].text.value.strip().split('\n')
+    response = messages.data[0].content[0].text.value.strip()
+    print("\nAPI Response:")
+    print(response)
+    print("\nParsing response...")
+    combinations = response.split('\n')
     
     # Parse combinations into list of dictionaries
     result = []
+    print("\nParsing combinations:")
     for combo in combinations:
-        topic_part, keywords_part = combo.split(' | ')
-        topic = topic_part.replace('Topic:', '').strip()
-        keywords = [k.strip() for k in keywords_part.replace('Keywords:', '').split(',')]
-        result.append({'topic': topic, 'keywords': keywords})
+        try:
+            if ' | ' not in combo:
+                print(f"Warning: Missing separator '|' in line: {combo}")
+                continue
+                
+            topic_part, keywords_part = combo.split(' | ')
+            if not topic_part.startswith('Topic:') or not keywords_part.startswith('Keywords:'):
+                print(f"Warning: Missing Topic/Keywords prefix in response: {combo}")
+                continue
+                
+            topic = topic_part.replace('Topic:', '').strip()
+            keywords = [k.strip() for k in keywords_part.replace('Keywords:', '').split(',')]
+            
+            if not topic or not keywords:
+                print(f"Warning: Empty topic or keywords in response: {combo}")
+                continue
+                
+            result.append({'topic': topic, 'keywords': keywords})
+        except Exception as e:
+            print(f"Warning: Error parsing combination '{combo}': {str(e)}")
+            continue
+    
+    if not result:
+        raise ValueError("Failed to parse any valid topic-keyword combinations from response")
     
     return result
 
