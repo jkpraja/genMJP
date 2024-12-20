@@ -142,12 +142,38 @@ def main():
     # Load configuration
     config = load_config()
     
-    # Set up OpenAI client
-    global client
-    client = openai.OpenAI(api_key=config['OPENAI_API_KEY'])
-    
-    # Get assistant ID from config
-    assistant_id = config['ASSISTANT_ID']
+    try:
+        # Set up OpenAI client
+        global client
+        api_key = config['OPENAI_API_KEY']
+        
+        # Validate API key format
+        if not api_key.startswith('sk-'):
+            raise ValueError("Invalid API key format. Key should start with 'sk-'")
+            
+        client = openai.OpenAI(api_key=api_key)
+        
+        # Verify API key by making a simple API call
+        try:
+            client.models.list()
+        except openai.AuthenticationError as e:
+            raise ValueError(f"OpenAI API authentication failed. Please check your API key. Error: {str(e)}")
+        except Exception as e:
+            raise ValueError(f"Failed to verify API key: {str(e)}")
+        
+        # Get assistant ID from config
+        assistant_id = config['ASSISTANT_ID']
+        
+        # Verify assistant ID
+        try:
+            client.beta.assistants.retrieve(assistant_id)
+        except Exception as e:
+            raise ValueError(f"Failed to retrieve assistant with ID {assistant_id}. Error: {str(e)}")
+            
+        print("Successfully authenticated with OpenAI API and verified assistant ID")
+    except Exception as e:
+        print(f"Setup error: {str(e)}")
+        sys.exit(1)
     
     try:
         for i in range(args.num_prompts):

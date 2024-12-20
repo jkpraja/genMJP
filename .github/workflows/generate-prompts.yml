@@ -27,11 +27,33 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       
+      - name: Verify environment variables
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "Error: OPENAI_API_KEY is not set"
+            exit 1
+          fi
+          if [ -z "$ASSISTANT_ID" ]; then
+            echo "Error: ASSISTANT_ID is not set"
+            exit 1
+          fi
+          echo "Environment variables are properly set"
+          # Verify API key format (should start with 'sk-')
+          if [[ ! "$OPENAI_API_KEY" =~ ^sk- ]]; then
+            echo "Error: OPENAI_API_KEY format is incorrect. Should start with 'sk-'"
+            exit 1
+          fi
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ASSISTANT_ID: ${{ secrets.ASSISTANT_ID }}
+
       - name: Generate prompts
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ASSISTANT_ID: ${{ secrets.ASSISTANT_ID }}
-        run: python generate_prompts.py -n 50  # Generate 50 prompts per hour
+        run: |
+          echo "Starting prompt generation..."
+          python generate_prompts.py -n 50  # Generate 50 prompts per hour
       
       - name: Configure Git
         run: |
