@@ -70,7 +70,7 @@ jobs:
             echo "Error: Failed to set Git user name"
             exit 1
           fi
-          if ! git config user.email "56293901+jkpraja@users.noreply.github.com"; then
+          if ! git config user.email "actions@github.com"; then
             echo "Error: Failed to set Git user email"
             exit 1
           fi
